@@ -1,0 +1,119 @@
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  EC2Key:
+    Description: "Name of an existing EC2 KeyPair to enable SSH access to the instance"
+    Type: AWS::EC2::KeyPair::KeyName
+
+Mappings:
+  RegionMap:
+    us-east-1:
+      "AMI": "ami-046842448f9e74e7d"
+    us-east-2:
+      "AMI": "ami-0367b500fdcac0edc"
+    us-west-1:
+      "AMI": "ami-0d58800f291760030"
+    us-west-2:
+      "AMI": "ami-0edf3b95e26a682df"
+    ca-central-1:
+      "AMI": "ami-064efdb82ae15e93f"
+
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    DependsOn: VPC
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    DependsOn: InternetGateway
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+  Subnet:
+    Type: AWS::EC2::Subnet
+    DependsOn: VPC
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.0.0/16
+      MapPublicIpOnLaunch: true
+      AvailabilityZone: !Select
+        - 0
+        - Fn::GetAZs: !Ref "AWS::Region"
+  RouteTable:
+    Type: AWS::EC2::RouteTable
+    DependsOn: AttachGateway
+    Properties:
+      VpcId: !Ref VPC
+  Route:
+    Type: AWS::EC2::Route
+    DependsOn: RouteTable
+    Properties:
+      RouteTableId: !Ref RouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+  SubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref Subnet
+      RouteTableId: !Ref RouteTable
+  AllSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "All external http(s) connections and all internal"
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 0
+          ToPort: 65535
+          CidrIp: 10.0.0.0/16
+  MasterSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "Allow external SSH and kotsadm for the cluster master."
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 8800
+          ToPort: 8800
+          CidrIp: 0.0.0.0/0
+  KubeMasterEC2:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", AMI]
+      InstanceType: 'm5a.xlarge'
+      KeyName: !Ref EC2Key
+      SubnetId: !Ref Subnet
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 60
+      SecurityGroupIds:
+        - !Ref AllSecurityGroup
+        - !Ref MasterSecurityGroup
+  KubeNode1EC2:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", AMI]
+      InstanceType: 'm5a.large'
+      KeyName: !Ref EC2Key
+      SubnetId: !Ref Subnet
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 60
+      SecurityGroupIds:
+        - !Ref AllSecurityGroup
