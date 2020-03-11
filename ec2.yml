@@ -117,3 +117,16 @@ Resources:
             VolumeSize: 60
       SecurityGroupIds:
         - !Ref AllSecurityGroup
+  KubeNode2EC2:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", AMI]
+      InstanceType: 'm5a.large'
+      KeyName: !Ref EC2Key
+      SubnetId: !Ref Subnet
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 60
+      SecurityGroupIds:
+        - !Ref AllSecurityGroup
