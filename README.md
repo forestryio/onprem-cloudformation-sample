@@ -18,6 +18,11 @@
 - Deploy stack from the cli (with named pofile)
   ```aws cloudformation deploy --template-file ec2.yml --stack-name $USER-on-prem --profile {profile_name}--parameter-overrides EC2Key=$USER```
 
+- Get Public IP addresses to SSH 
+```
+aws ec2 describe-instances --profile {profile_name} --query 'Reservations[*].Instances[*].PublicIpAddress' --output text
+```
+
 ##### Bonus
 - Describe cloudformation deployment events 
 ```aws cloudformation describe-stack-events --stack-name $USER-on-prem```
