@@ -13,10 +13,16 @@
 ```aws ec2 create-key-pair --key-name $USER --query 'KeyMaterial' --output text  --profile {profile_name} > ~/.ssh/$USER.pem```
 
 - Deploy stack from the cli (with default pofile)
-  ```aws cloudformation deploy --template-file ec2.yml --stack-name $USER-on-prem --parameter-overrides EC2Key=$USER```
+  ```
+  MyPubIP=`curl ifconfig.me` && \
+  aws cloudformation deploy --template-file ec2.yml --stack-name $USER-on-prem --parameter-overrides EC2Key=$USER MyPubIP=$MyPubIP/32
+  ```
 
 - Deploy stack from the cli (with named pofile)
-  ```aws cloudformation deploy --template-file ec2.yml --stack-name $USER-on-prem --profile {profile_name}--parameter-overrides EC2Key=$USER```
+  ```
+  MyPubIP=`curl ifconfig.me` && \
+  aws cloudformation deploy --template-file ec2.yml --stack-name $USER-on-prem --profile {profile_name}--parameter-overrides EC2Key=$USER MyPubIP=$MyPubIP/32
+  ```
 
 - Get Public IP addresses to SSH 
 ```

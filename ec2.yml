@@ -3,7 +3,9 @@ Parameters:
   EC2Key:
     Description: "Name of an existing EC2 KeyPair to enable SSH access to the instance"
     Type: AWS::EC2::KeyPair::KeyName
-
+  MyPubIP:
+    Description: "My Public IP to allow access to the EC2 instance - x.x.x.x/32"
+    Type: String
 Mappings:
   RegionMap:
     us-east-1:
@@ -76,6 +78,10 @@ Resources:
           FromPort: 0
           ToPort: 65535
           CidrIp: 10.0.0.0/16
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref MyPubIP
   MasterSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -85,7 +91,7 @@ Resources:
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
-          CidrIp: 0.0.0.0/0
+          CidrIp: !Ref MyPubIP
         - IpProtocol: tcp
           FromPort: 8800
           ToPort: 8800
