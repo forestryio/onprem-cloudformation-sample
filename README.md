@@ -21,7 +21,7 @@
 - Deploy stack from the cli (with named pofile)
   ```
   MyPubIP=`curl ifconfig.me` && \
-  aws cloudformation deploy --template-file ec2.yml --stack-name $USER-on-prem --profile {profile_name}--parameter-overrides EC2Key=$USER MyPubIP=$MyPubIP/32
+  aws cloudformation deploy --template-file ec2.yml --stack-name $USER-on-prem --profile {profile_name} --parameter-overrides EC2Key=$USER MyPubIP=$MyPubIP/32
   ```
 
 - Get Public IP addresses to SSH 
